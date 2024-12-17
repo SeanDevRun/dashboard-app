@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splash Screen</title>
+  <style>
+     /* Ensure the body takes full height and the icon fills the window */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #18324d;
+      /* Optional: Set a background color */
+    }
+
+    /* Style for the splash icon */
+    .splash-icon {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* Scale the icon to fill the container */
+      max-width: 100%;
+      /* Prevent icon from stretching beyond the window */
+      max-height: 100%;
+      /* Prevent icon from stretching beyond the window */
+    }
+  </style>
+</head>
+
+<body>
+  <img src="../../assets/icons/icon.png" alt="App Icon" class="splash-icon">
+</body>
+
+</html>
