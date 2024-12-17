@@ -1,4 +1,4 @@
-const { BrowserWindow, globalShortcut, session, shell } = require('electron');
+const { BrowserWindow, globalShortcut, session, app } = require('electron');
 const path = require('path');
 
 const { resolvePath } = require('./pathHelpers');
