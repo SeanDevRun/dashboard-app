@@ -1,0 +1,24 @@
+{
+  "layout": {
+    "rows" : [ 75, 25 ],
+    "columns" : [ 60, 40 ]
+  },
+  "views": [
+    {
+      "url": "https://www.flightradar24.com/multiview/51.47,-0.46/14",
+      "row": 0,
+      "col": 0,
+      "rowspan": 2
+    },
+    {
+      "url": "https://www.flightradar24.com/multiview/51.15,-0.18/14",
+      "row": 0,
+      "col": 1      
+    },
+    {
+      "url": "https://www.rlogical.com/wp-content/uploads/2023/03/Electronjs.webp",
+      "row": 1,
+      "col": 1      
+    }
+  ]
+}

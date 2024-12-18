@@ -22,8 +22,9 @@
       "icon": "assets/icons/icon.ico"
     },
     "files": [
-      "**/*", 
-      "configs/viewsConfig.json" 
+      "**/*",           
+      "configs/default.json",     
+      "!configs/**"      
     ]
   },
   "keywords": [],

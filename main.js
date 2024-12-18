@@ -1,23 +1,21 @@
 const { app } = require('electron');
-const path = require('path');
-const createSplashScreen = require('./utils/splashScreen'); // Import the splash screen module
-const createMainWindow = require('./utils/mainWindow'); // Import the createMainWindow function
+const SplashWindow = require('./utils/splashScreen'); // Import the splash screen module
+const MainWindow = require('./utils/mainWindow');  // Import the ViewsManager class
 
-let splashWindow;
 
-// Path to the original config file in the app
-const defaultConfigPath = path.join(__dirname, 'configs', 'config.json');
-
+let mainWindow;
+let splashScreen;
 
 app.whenReady().then(() => {
     try {
         // Show the splash screen
-        console.log('Creating splash screen');
-        splashWindow = createSplashScreen();
+        splashScreen = new SplashWindow();
+        splashScreen.create();
 
         // Create the main window after a short delay
-        console.log('Creating main screen');
-        createMainWindow(splashWindow); // Pass the splash window to the createMainWindow function
+        mainWindow = new MainWindow(splashScreen);
+        mainWindow.create();
+        
     } catch (error) {
         console.error("Error during app startup:", error);
         app.quit(); // Exit the app if the error is unresolvable

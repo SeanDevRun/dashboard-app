@@ -1,62 +1,137 @@
-const { BrowserWindow, globalShortcut, session, app } = require('electron');
+const { BrowserWindow, globalShortcut, session, app, shell, Menu, MenuItem } = require('electron');
 const path = require('path');
 
 const { resolvePath } = require('./pathHelpers');
 const ViewsManager = require('./viewsManager');  // Import the ViewsManager class
+const { getConfigDirPath } = require('./configHandler');  // Import the config loader
 
-function createMainWindow(splashWindow) {
-    let mainWindow = new BrowserWindow({
-        fullscreen: true, // Launch the app in fullscreen mode
-        titleBarStyle: 'hidden', // Optional: Remove the title bar
-        show: false, // Don't show the main window immediately
-        icon: path.join(resolvePath('@assets'), 'icons', 'icon.ico'), // Set the app icon
-        webPreferences: {
-            nodeIntegration: false, // Disable nodeIntegration for security
-            contextIsolation: true, // Enable contextIsolation for security
-        },
-    });
+class MainWindow {
+    constructor(splashWindow) {
+        this.mainWindow = null;
+        this.splashScreen = splashWindow;
+        this.viewsManager = null;
+        this.debug = false;
+    }
 
-    let viewsManager = new ViewsManager(mainWindow); // Initialize ViewsManager
-    viewsManager.updateViews(); // Initial update of views    
+    showHideMenuBar(menuBarVisible) {
+        this.mainWindow.menuBarVisible = menuBarVisible;
 
-    // Load the content
-    mainWindow.loadFile(path.join(resolvePath('@views'), 'index.html'));
+        if (this.mainWindow.menuBarVisible) {
+            this.showDebug('Show Menubar');
+        } else {
+            this.showDebug('Hide Menubar');
+        }
+    }
 
-    // Update views whenever the window is resized
-    mainWindow.on('resize', () => {
-        viewsManager.updateViews();
-    });
+    showDebug(msg) {
+        if (this.debug) {
+            console.log(`\n${msg}`)
+        }
+    }
 
-    // Register a global shortcut to refresh all views (e.g., Ctrl+R)
-    globalShortcut.register('CommandOrControl+R', () => {
-        viewsManager.refreshAllViews();
-    });
+    addMenuOptions() {
+        const currentMenu = Menu.getApplicationMenu();
 
-    // Register a global shortcut to clear cache (e.g., Ctrl+Shift+C)
-    globalShortcut.register('CommandOrControl+Shift+C', () => {
-        session.defaultSession.clearCache().then(() => {
-            console.log('Cache cleared successfully');
-            viewsManager.refreshAllViews();
+        if (!currentMenu) {
+            console.error('No existing menu found.');
+            return;
+        }
+
+        // Define the new menu to be inserted
+        const toolsMenu = {
+            label: 'Tools',
+            submenu: [
+                {
+                    label: 'Open Config',
+                    accelerator: 'Ctrl+Shift+?',
+                    click: () => {
+                        shell.openPath(getConfigDirPath());
+                    },
+                },
+                {
+                    label: 'Reload Config',
+                    accelerator: 'Ctrl+Shift+D',
+                    click: () => {
+                        this.viewsManager.reloadConfig();
+                    },
+                },
+                {
+                    label: 'Show/Hide Toolbar',
+                    accelerator: 'Ctrl+Shift+T',
+                    click: () => {
+                        this.showHideMenuBar(!this.mainWindow.menuBarVisible);
+                    },
+                },
+            ],
+        };
+
+        // Insert the new menu at the desired position (e.g., at index 2)
+        const updatedMenuTemplate = currentMenu.items.map((menuItem) => menuItem);
+        updatedMenuTemplate.splice(1, 0, toolsMenu); // Insert at the second position
+
+        // Rebuild and set the updated menu
+        const updatedMenu = Menu.buildFromTemplate(updatedMenuTemplate);
+        Menu.setApplicationMenu(updatedMenu);
+    }
+
+    create() {
+
+        this.showDebug('Creating MainWindow.....')
+
+        this.mainWindow = new BrowserWindow({
+            show: false, // Don't show the main window immediately
+            icon: path.join(resolvePath('@assets'), 'icons', 'icon.ico'), // Set the app icon
+            webPreferences: {
+                nodeIntegration: false, // Disable nodeIntegration for security
+                contextIsolation: true, // Enable contextIsolation for security
+            },
         });
-    });
 
-    // Handle window's 'did-finish-load' event
-    mainWindow.webContents.once('did-finish-load', () => {
-        console.log("Close splash screen");
-        // Close the splash screen once the content is loaded
-        splashWindow.close();
+        // Remove menu bar
+        this.mainWindow.menuBarVisible = false;
 
-        console.log("Show main window");
-        // Show the main window
-        mainWindow.show();
-    });
+        // Launch the app in fullscreen mode
+        this.mainWindow.fullScreen = true;
 
-    // Optional: Handle window close
-    mainWindow.on('closed', () => {
-        app.quit();
-    });
+        this.viewsManager = new ViewsManager(this.mainWindow); // Initialize ViewsManager
+        this.viewsManager.updateViews(); // Initial update of views  
 
-    return mainWindow; // Return the main window instance
+        this.addMenuOptions();
+
+        // Load the content
+        this.mainWindow.loadFile(path.join(resolvePath('@views'), 'index.html'));
+
+        // Update views whenever the window is resized
+        this.mainWindow.on('resize', () => {
+            this.viewsManager.updateViews();
+        });
+
+        // Handle window's 'did-finish-load' event
+        this.mainWindow.webContents.once('did-finish-load', () => {
+            // Close the splash screen once the content is loaded
+            this.splashScreen.close();
+
+            this.showDebug("Show main window");
+            // Show the main window
+            this.mainWindow.show();
+        });
+
+        // Toggle toolbar visibility based on fullscreen state
+        this.mainWindow.on('enter-full-screen', () => {
+            this.showHideMenuBar(false);
+        });
+
+        this.mainWindow.on('leave-full-screen', () => {
+            this.showHideMenuBar(true);
+        });
+
+        // Optional: Handle window close
+        this.mainWindow.on('closed', () => {
+            app.quit();
+        });
+
+    }
+
 }
 
-module.exports = createMainWindow;
+module.exports = MainWindow;
