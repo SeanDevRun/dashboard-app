@@ -5,6 +5,8 @@ const { resolvePath } = require('./pathHelpers');
 const ViewsManager = require('./viewsManager');  // Import the ViewsManager class
 const { getConfigDirPath } = require('./configHandler');  // Import the config loader
 
+const autoLaunchManager = require('./autoLaunchManager'); // Import the auto-launch manager module
+
 class MainWindow {
     constructor(splashWindow) {
         this.mainWindow = null;
@@ -55,6 +57,7 @@ class MainWindow {
                         this.viewsManager.reloadConfig();
                     },
                 },
+                { type: 'separator' },
                 {
                     label: 'Show/Hide Toolbar',
                     accelerator: 'Ctrl+Shift+T',
@@ -62,8 +65,25 @@ class MainWindow {
                         this.showHideMenuBar(!this.mainWindow.menuBarVisible);
                     },
                 },
+                { type: 'separator' },
+                {
+                    label: 'Enable Auto-Launch',
+                    type: 'checkbox',
+                    checked: false, // Initially unchecked (it will be dynamically set)
+                    click: (item) => {
+                        if (item.checked) {
+                            autoLaunchManager.enableAutoLaunch();  // Enable auto-launch
+                            item.label = 'Disable Auto-Launch';
+                        } else {
+                            autoLaunchManager.disableAutoLaunch(); // Disable auto-launch
+                            item.label = 'Enable Auto-Launch';
+                        }
+                    },
+                },
             ],
         };
+
+        this.updateAutoLaunchMenuLabel();
 
         // Insert the new menu at the desired position (e.g., at index 2)
         const updatedMenuTemplate = currentMenu.items.map((menuItem) => menuItem);
@@ -72,6 +92,24 @@ class MainWindow {
         // Rebuild and set the updated menu
         const updatedMenu = Menu.buildFromTemplate(updatedMenuTemplate);
         Menu.setApplicationMenu(updatedMenu);
+    }
+
+
+    // Function to update the label dynamically based on auto-launch status
+    updateAutoLaunchMenuLabel() {
+        autoLaunchManager.isAutoLaunchEnabled().then((enabled) => {
+            const menu = Menu.getApplicationMenu();
+            const settingsMenu = menu.items.find(item => item.label === 'Tools');
+            const autoLaunchItem = settingsMenu.submenu.items.find(item => item.label.endsWith('Auto-Launch'));
+
+            if (enabled) {
+                autoLaunchItem.label = 'Disable Auto-Launch'; // Update label when auto-launch is enabled
+                autoLaunchItem.checked = enabled;
+            } else {
+                autoLaunchItem.label = 'Enable Auto-Launch'; // Update label when auto-launch is disabled
+                autoLaunchItem.checked = enabled;
+            }
+        });
     }
 
     create() {

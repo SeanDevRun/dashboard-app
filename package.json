@@ -22,9 +22,9 @@
       "icon": "assets/icons/icon.ico"
     },
     "files": [
-      "**/*",           
-      "configs/default.json",     
-      "!configs/**"      
+      "**/*",
+      "configs/default.json",
+      "!configs/**"
     ]
   },
   "keywords": [],
@@ -34,5 +34,8 @@
   "devDependencies": {
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "auto-launch": "^5.0.6"
   }
 }
