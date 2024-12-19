@@ -28,8 +28,8 @@ class ViewsManager {
       buttons: ['OK']
     }).then(result => {
       shell.openPath(getConfigDirPath());
-    });  
-    
+    });
+
   }
 
   // Reload config and reset views
@@ -202,6 +202,7 @@ class ViewsManager {
     return match ? match[1] : null;
   }
 
+
   // Update view sizes based on the configuration
   updateViews() {
     if (!this.userSettings) {
@@ -215,10 +216,11 @@ class ViewsManager {
     const columnWidths = this.userSettings.layout.columns.map((percent) => (width * percent) / 100);
 
     // Calculate the height of each row based on percentages
-    const rowHeights = this.userSettings.layout.rows.map((percent) => (height * percent) / 100);
+    const rowHeights = this.userSettings.layout.rows.map((percent) => (height * percent) / 100)
 
-    // console.log(rowHeights);
-    // console.log(columnWidths);
+    //this.showDebug(`W: ${width}, H: ${height}`);
+    //this.showDebug(`RowH: ${rowHeights}`);
+    //this.showDebug(`ColW: ${columnWidths}`);
 
     this.views.forEach(({ view, config }) => {
       // Default rowspan and colspan to 1 if not specified
@@ -233,7 +235,9 @@ class ViewsManager {
 
       // Calculate the y position based on the row height for the specific row
       const y = rowHeights.slice(0, row).reduce((sum, h) => sum + h, 0);
-      const viewHeight = rowHeights[row] * rowspan;
+      const viewHeight = rowHeights.slice(row, row + rowspan).reduce((sum, h) => sum + h, 0);
+
+      //this.showDebug(`Row: ${row}, Col: ${col}, X: ${x}, Y: ${y}, W: ${viewWidth}, H: ${viewHeight}`);      
 
       view.setBounds({
         x: Math.floor(x),
