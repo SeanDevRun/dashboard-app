@@ -63,18 +63,29 @@ class ViewsManager {
 
     let view;
 
-    view = new WebContentsView({
-      webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: true,
-      },
-    });
+    if (config.url || config.youtube) {
+      view = new WebContentsView({
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: true,
+        },
+      });
 
-    this.mainWindow.contentView.addChildView(view);
+      this.mainWindow.contentView.addChildView(view);
 
-    this.views.push({ view, config });
-    view.webContents.loadURL(config.url);
+      this.views.push({ view, config });
 
+      if (config.url) {
+        this.createUrl(view, config.url);
+      }
+      else if (config.youtube) {
+        this.createYoutube(view, config.youtube);
+      }
+    }
+  }
+
+  createUrl(view, url) {
+    view.webContents.loadURL(url);
     this.injectCSS(view);
   }
 
@@ -82,16 +93,87 @@ class ViewsManager {
   injectCSS(view) {
     view.webContents.on('dom-ready', () => {
       view.webContents.insertCSS(`
-          body {
-            overflow: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          ::-webkit-scrollbar {
-            display: none !important;
-          }
-        `);
+            body {
+              overflow: auto !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            ::-webkit-scrollbar {
+              display: none !important;
+            }
+          `);
     });
+  }
+
+  createYoutube(view, videoUrl) {
+    // Extract the YouTube video ID from the URL
+    const videoId = this.extractYouTubeVideoId(videoUrl);
+    if (!videoId) {
+      console.error('Invalid YouTube URL');
+      return;
+    }
+
+    //small, medium, large, hd720, hd1080, highres, and auto.
+    let quality = "hd720";
+
+    // Load the YouTube player HTML content dynamically
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>YouTube Player</title>
+        <style>
+          body {
+            margin: 0;
+            overflow: hidden;
+          }
+          #youtube-player {
+            width: 100vw;
+            height: 100vh;
+          }
+        </style>
+        <script>
+          function onYouTubeIframeAPIReady() {
+            new YT.Player('youtube-player', {
+              videoId: '${videoId}',
+              playerVars: {
+                autoplay: 1,
+                loop: 1,
+                playlist: '${videoId}',
+                controls: 1,
+                rel: 0,
+                quality: '${quality}', // Set quality here
+              },
+              events: {
+                onReady: (event) => {
+                  event.target.mute();
+                  event.target.playVideo();
+                  event.target.setPlaybackQuality('${quality}'); // Set the video quality after ready
+                },
+              },
+            });
+          }
+          const script = document.createElement('script');
+          script.src = 'https://www.youtube.com/iframe_api';
+          document.head.appendChild(script);
+        </script>
+      </head>
+      <body>
+        <div id="youtube-player"></div>
+      </body>
+      </html>
+      `;
+
+    // Load the HTML content into the view
+    view.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);
+  }
+
+  // Helper function to extract YouTube video ID from URL
+  extractYouTubeVideoId(url) {
+    const regex = /(?:youtube\.com\/.*[?&]v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
   }
 
   // Update view sizes based on the configuration
@@ -135,11 +217,6 @@ class ViewsManager {
       });
     });
 
-  }
-
-  // Calculate column widths based on the configuration percentages
-  calculateColumnWidths(totalWidth) {
-    return this.userSettings.columnWidths.map((percent) => (totalWidth * percent) / 100);
   }
 
   // Refresh all views by reloading their content
