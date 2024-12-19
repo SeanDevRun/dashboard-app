@@ -8,20 +8,21 @@ const { resolvePath } = require('./pathHelpers');
 const userDataPath = app.getPath('userData');
 const userConfigDirPath = path.join(userDataPath, 'Configs');
 const userConfigPath = path.join(userConfigDirPath, 'config.json');
+const demoConfigPath = path.join(userConfigDirPath, 'demo_config.json');
 const bundledConfigPath = path.join(resolvePath('@configs'), 'default.json');
 
 function ensureDirectoryExists(directoryPath) {
 
   // Check if the directory exists
   if (!fs.existsSync(directoryPath)) {
-      try {
-          // Create the directory (and any necessary parent directories)
-          fs.mkdirSync(directoryPath, { recursive: true });
-          console.log(`Directory created: ${directoryPath}`);
-      } catch (err) {
-          console.error(`Error creating directory: ${err}`);
-      }
-  } 
+    try {
+      // Create the directory (and any necessary parent directories)
+      fs.mkdirSync(directoryPath, { recursive: true });
+      console.log(`Directory created: ${directoryPath}`);
+    } catch (err) {
+      console.error(`Error creating directory: ${err}`);
+    }
+  }
 
 }
 
@@ -40,11 +41,19 @@ function getConfigPath() {
   ensureDirectoryExists(userConfigDirPath);
 
   if (!fs.existsSync(userConfigPath)) {
-    try {
-      fs.copyFileSync(bundledConfigPath, userConfigPath);
-      console.log(`\nCopied default config to: ${userConfigPath}`);
-    } catch (err) {
-      console.error('Error copying config file:', err);
+    if (!fs.existsSync(userConfigPath)) {
+      try {
+        fs.copyFileSync(bundledConfigPath, userConfigPath);
+        console.log(`\nCopied default config to: ${userConfigPath}`);
+        fs.copyFileSync(bundledConfigPath, demoConfigPath);
+        console.log(`\nCopied default config to: ${demoConfigPath}`);
+      } catch (err) {
+        console.error('Error copying config file:', err);
+      }
+    }
+    else
+    {
+      console.error(`Error copying config file as doesn't exist:\n${userConfigPath}`); 
     }
   }
 
@@ -68,7 +77,7 @@ function loadConfig() {
     console.error('Error reading config file:', err);
     return {};
   }
-  
+
 }
 
 module.exports = { loadConfig, getConfigPath, getConfigDirPath };

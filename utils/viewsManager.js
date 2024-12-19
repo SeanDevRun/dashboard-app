@@ -1,6 +1,6 @@
-const { WebContentsView } = require('electron');
+const { WebContentsView, shell, dialog } = require('electron');
 
-const { loadConfig, getConfigPath } = require('./configHandler');  // Import the config loader
+const { loadConfig, getConfigPath, getConfigDirPath } = require('./configHandler');  // Import the config loader
 
 class ViewsManager {
   constructor(mainWindow) {
@@ -16,6 +16,20 @@ class ViewsManager {
     if (this.debug) {
       console.log(`\n${msg}`)
     }
+  }
+
+  errorCreatingView() {
+
+    // Show a warning dialog
+    dialog.showMessageBox({
+      type: 'warning',
+      title: 'Warning',
+      message: "Issue with config.json.\nDoes it exist? Have you defined views?\nPress OK to open config folder.",
+      buttons: ['OK']
+    }).then(result => {
+      shell.openPath(getConfigDirPath());
+    });  
+    
   }
 
   // Reload config and reset views
@@ -44,17 +58,29 @@ class ViewsManager {
 
     if (!this.userSettings) {
       this.showDebug('No user settings found.');
+      this.errorCreatingView();
       return;
     }
+    else if (this.userSettings.views) {
+      this.userSettings.views.forEach((config) => {
+        const { enabled = true } = config;
 
-    this.userSettings.views.forEach((config) => {
-      const { enabled = true } = config;
+        if (enabled) {
 
-      if (enabled) {
-        this.showDebug(`Creating view for: ${config.url}`);
-        this.createView(config);
-      }
-    });
+          if (config.url) {
+            this.showDebug(`Creating view for URL: ${config.url}`);
+          }
+          else if (config.youtube) {
+            this.showDebug(`Creating view for YOUTUBE: ${config.youtube}`);
+          }
+
+          this.createView(config);
+        }
+      });
+    }
+    else {
+      this.errorCreatingView();
+    }
 
   }
 

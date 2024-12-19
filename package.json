@@ -23,8 +23,8 @@
     },
     "files": [
       "**/*",
-      "configs/default.json",
-      "!configs/**"
+      "!configs/**",
+      "configs/default.json"
     ]
   },
   "keywords": [],

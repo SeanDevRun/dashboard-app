@@ -2,7 +2,6 @@ const { app } = require('electron');
 const SplashWindow = require('./utils/splashScreen'); // Import the splash screen module
 const MainWindow = require('./utils/mainWindow');  // Import the ViewsManager class
 
-
 let mainWindow;
 let splashScreen;
 
@@ -18,14 +17,14 @@ app.whenReady().then(() => {
         
     } catch (error) {
         console.error("Error during app startup:", error);
-        app.quit(); // Exit the app if the error is unresolvable
+        //app.quit(); // Exit the app if the error is unresolvable
     }
 });
 
 // Handle any uncaught exceptions globally
 process.on('uncaughtException', (error) => {
     console.error("Uncaught Exception:", error);
-    app.quit(); // Exit the app in case of an uncaught exception
+    //app.quit(); // Exit the app in case of an uncaught exception
 });
 
 app.on('window-all-closed', () => {
